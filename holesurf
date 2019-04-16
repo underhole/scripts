@@ -1,0 +1,111 @@
+#!/usr/bin/env bash
+#====================HEADER==========================================|
+#AUTOR
+# Jefferson 'Slackjeff' Rocha <root@slackjeff.com.br>
+#
+#LICENCE
+# MIT
+#
+#PROGRAM
+# holesurf - Syncronize Holes on underhole network.
+#
+#LICENSE
+# MIT
+#
+#CHANGELOG
+# View on changelog.txt
+#====================================================================|
+
+
+##############################################
+# VARS
+##############################################
+export PRG='holesurf'               # Name Program
+export USERDIR="${HOME}/.underhole" # Directory of ALL holes
+export HOLELIST="${USERDIR}/holelist.txt"
+export BROWSER='lynx'               # Default Browser
+export RSYNC_PASSWORD=''            # Inicialize variable
+
+#COLORS
+red='\033[31;1m'
+yellow='\033[33;1m'
+blue='\033[34;1m'
+end='\033[m'
+bg_dir='\033[37;44;1m'
+bg_file='\033[37;41;1m'
+
+##############################################
+# FUNC
+##############################################
+
+# Read a CSV hole-list
+_READ()
+{
+    local c1 c2 c3
+    local IFS
+
+    while IFS='&' read -r c1 c2 c3 c4 c5; do
+        [[ "$c1" =~ ^# ]] && continue
+        echo -e "HOLE:\t$c1\nIP:\t$c2\nCOMM:\t$c5\n--------------------------------------------\n"
+    done <"$HOLELIST"
+    return 0
+}
+
+# Password + Salt For secure BD.
+_SECURE_PASS()
+{
+    local salt_size='5' # Tamanho que terá o salt
+    local delimiter=':'
+    local PASSWORD="$1"
+
+    # Nulo cai fora
+    [[ -z "$PASSWORD" ]] && { echo "The input parameter is null."; return 1 ;}
+    # Gerando sal randômico
+    SALT="$(head /dev/urandom | tr -dc "0-9a-zA-Z" | head -c "$salt_size"; echo)"
+    # Printa pra noix
+    printf "${SALT}${delimiter}"
+    printf "${PASSWORD}${SALT}" | sha256sum | cut -d ' ' -f 1
+}
+
+##############################################
+# TEST
+##############################################
+[[ "$UID" = '0' ]] && { echo "Root? Is not secure. ABORT"; exit 1 ;} # Root?
+[[ ! -d "$USERDIR" ]] && mkdir -v "$USERDIR" # create a underhole directory
+if [[ ! -e "$HOLELIST" ]]; then # Exist hole-list?
+    echo '# | HOLE | | IP | | PASS | SALT | COMMENT |#' > "$HOLELIST"
+    echo 'dadhole&192.168.0.2&921955344cf0b42c9a289f37feeee7e5778ca452e6d327703091f926e5b08c19&FF9vr&The Dad of Holes.' >> "$HOLELIST"
+fi
+
+##############################################
+# MAIN
+##############################################
+
+case $1 in
+    sync) # Sync hole-list
+        shift # down
+        OLDIFS="$IFS"
+        inc='0'
+        # Print
+        while IFS='&' read -r column1 column2 column3 column4 column5; do
+            [[ "$column1" =~ ^# ]] && continue
+            inc=$(($inc + 1))
+            echo -e "($inc) $column1 - $column2 - $column5"
+        done < "$HOLELIST"
+        read -p $'\nServer to Sync: ' select_server
+        # Only numbers.
+        ! [[ "$select_server" =~ ^[0-9]+$ ]] && { echo "$select_server Invalid Option."; exit 1 ;}
+    ;;
+
+    show)
+        shift # Down.
+        [[ -e "$HOLELIST" ]] && _READ
+    ;;
+
+    add)
+        shift
+        read -p "Password of Hole: " password
+        _SECURE_PASS "$password"
+    ;;
+esac
+
