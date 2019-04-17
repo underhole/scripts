@@ -92,6 +92,7 @@ case $1 in
               options[i++]="$column1&$column2&$column3&$column4" # Capture all line
               inc=$(($inc + 1)) # Inc for Menu
           done < "$HOLELIST"
+          IFS="$OLDIFS" # Return IFS.
           read -p $'\n\033[37;44;1mServer to Sync:\033[m ' select_server
           if ! [[ "$select_server" =~ ^[0-9]+$ ]]; then
               echo "$select_server Invalid Option."
@@ -116,9 +117,24 @@ case $1 in
           fi
     ;;
 
-    show)
+    show) # Show your hole-List.
           shift # Down.
           [[ -e "$HOLELIST" ]] && _READ
+    ;;
+
+    add) # Add new hole in hole-list
+          read -p "Enter Name of Hole: " hole
+          read -p "Enter Host: " host
+          read -p "Enter Pass: " pass
+          read -p "Enter Port: " port
+          read -p "Enter Comment: " comment
+          # Exist?
+          while IFS= read line; do
+              [[ "$line" =~ ^${hole}\&${host} ]] && { echo -e "${red}$hole exist in $HOLELIST${end}"; exit 1 ;}
+          done < "$HOLELIST"
+          echo "${hole}&${host}&${pass}&${port}&${comment}" >> "$HOLELIST"
+          echo -e "${blue}${hole}-${host} Was successfully included in your hole-list${end}"
+          exit 0
     ;;
 esac
 
