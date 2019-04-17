@@ -67,13 +67,31 @@ _SECURE_PASS()
     printf "${PASSWORD}${SALT}" | sha256sum | cut -d ' ' -f 1
 }
 
+_HELP()
+{
+    cat <<EOF
+holesurf - Automate Network Synchronization Underhole
+
+holesurf [OPTIONS]
+USAGE:
+
+sync    Synchronize your favorite holes individually. 
+show    View all your favorite holes in holelist.txt
+add     Add a hole in your holelist.txt
+help    Show this help
+
+For HELP
+#underhole ON FREENODE
+EOF
+}
+
 ##############################################
 # TEST
 ##############################################
 [[ "$UID" = '0' ]] && { echo "Root? Is not secure. ABORT"; exit 1 ;} # Root?
 [[ ! -d "$USERDIR" ]] && mkdir -v "$USERDIR" # create a underhole directory
 if [[ ! -e "$HOLELIST" ]]; then # Exist hole-list?
-    echo 'dadhole&192.168.0.2&thedadhole&12000&The 1s Hole Wiki.' >> "$HOLELIST"
+    echo 'dadhole&dadhole.duckdns.org&thedadhole&12000&The 1s Hole Wiki.' >> "$HOLELIST"
 fi
 
 ##############################################
@@ -113,7 +131,7 @@ case $1 in
               echo -e "${blue}========Available in:${end} ${USERDIR}/${HOLE}"
               $BROWSER "${USERDIR}/${HOLE}"
           else
-              echo -e "${red}========SYNC ERROR. ${HOLE}${HOST}${end}"
+              echo -e "${red}========SYNC ERROR. ${HOLE} ${HOST}${end}"
           fi
     ;;
 
@@ -136,5 +154,6 @@ case $1 in
           echo -e "${blue}${hole}-${host} Was successfully included in your hole-list${end}"
           exit 0
     ;;
+    *) _HELP ;;
 esac
 
