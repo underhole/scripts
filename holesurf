@@ -23,8 +23,14 @@
 export PRG='holesurf'               # Name Program
 export USERDIR="${HOME}/.underhole" # Directory of ALL holes
 export HOLELIST="${USERDIR}/holelist.txt"
-export BROWSER='lynx'               # Default Browser
 export RSYNC_PASSWORD=''            # Inicialize variable
+
+# 0 OFF | 1 ON
+# If you need a browser please use 1.
+export BROWSER="1" # Default is ON.
+
+# if 'BROWSER' is 1, Take here your browser.
+MYBROWSER=""
 
 #COLORS
 red='\033[31;1m'
@@ -94,6 +100,16 @@ if [[ ! -e "$HOLELIST" ]]; then # Exist hole-list?
     echo 'dadhole&dadhole.duckdns.org&thedadhole&12000&The 1s Hole Wiki.' >> "$HOLELIST"
 fi
 
+# Check Browsers exist.
+if [[ -z "$MYBROWSER" ]] && [[ "$BROWSER" = '1' ]]; then
+  for browser in 'lynx' 'links' 'firefox'; do
+      if which "$browser" &>/dev/null; then
+          export BROWSER="$browser"
+          break
+      fi
+  done
+fi
+
 ##############################################
 # MAIN
 ##############################################
@@ -129,7 +145,7 @@ case $1 in
           if rsync -avzh rsync://${HOLE}@${HOST}:${PORT}/hole/ "${USERDIR}/${HOLE}"; then
               echo -e "${yellow}========Sync OK${end}"
               echo -e "${blue}========Available in:${end} ${USERDIR}/${HOLE}"
-              $BROWSER "${USERDIR}/${HOLE}"
+              eval $BROWSER "${USERDIR}/${HOLE}"
           else
               echo -e "${red}========SYNC ERROR. ${HOLE} ${HOST}${end}"
           fi
